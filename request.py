@@ -1,8 +1,18 @@
+import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime, timedelta
+
+# Define your Telegram bot token and chat ID
+TELEGRAM_BOT_TOKEN = 'your_telegram_bot_token'
+TELEGRAM_CHAT_ID = 'your_telegram_chat_id'
+
+def send_telegram_message(message):
+    url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage'
+    params = {'chat_id': TELEGRAM_CHAT_ID, 'text': message}
+    requests.post(url, params=params)
 
 def scrape_availability(url):
     options = webdriver.ChromeOptions()
@@ -53,6 +63,10 @@ def scrape_availability(url):
         availability_text = availability_element.text.strip()
         print(f"Availability Information: {availability_text}")
 
+        if availability_text != '0':  # Change this condition as per your requirement
+            message = f"Availability found for {url}\nAvailability Information: {availability_text}"
+            send_telegram_message(message)
+
     except Exception as e:
         print(f"Error occurred: {str(e)}")
 
@@ -70,7 +84,7 @@ def check_availability_for_dates(start_date, end_date):
 
 # Example usage
 user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-start_date = datetime.strptime('2024-08-20', '%Y-%m-%d')
-end_date = datetime.strptime('2024-08-23', '%Y-%m-%d')
+start_date = datetime.strptime('2024-08-27', '%Y-%m-%d')
+end_date = datetime.strptime('2024-08-30', '%Y-%m-%d')
 
 check_availability_for_dates(start_date, end_date)
