@@ -6,13 +6,15 @@ from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime, timedelta
 
 # Define your Telegram bot token and chat ID
-TELEGRAM_BOT_TOKEN = 'your_telegram_bot_token'
-TELEGRAM_CHAT_ID = 'your_telegram_chat_id'
+import os
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
 def send_telegram_message(message):
     url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage'
     params = {'chat_id': TELEGRAM_CHAT_ID, 'text': message}
-    requests.post(url, params=params)
+    response = requests.post(url, params=params)
+    print(f"Telegram response: {response.status_code} - {response.text}")
 
 def scrape_availability(url):
     options = webdriver.ChromeOptions()
