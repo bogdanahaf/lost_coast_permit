@@ -136,3 +136,4 @@ else:
         pin_telegram_message(new_message_id)
 
 check_availability_for_dates(start_date, end_date)
+
