@@ -93,7 +93,8 @@ def scrape_availability(url):
         )
         print("Availability information loaded")
 
-        availability_element = driver.find_element(By.XPATH, '//*[@id="per-availability-main"]/div/div[5]/div[3]/div[2]/div[2]/div/div[2]/div/button/span/span')
+        # availability_element = driver.find_element(By.XPATH, '//*[@id="per-availability-main"]/div/div[5]/div[3]/div[2]/div[2]/div/div[2]/div/button/span/span')
+        availability_element = driver.find_element(By.XPATH, '//*[@id="p')
         availability_text = availability_element.text.strip()
         print(f"Availability Information: {availability_text}")
 
