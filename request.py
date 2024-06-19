@@ -10,11 +10,43 @@ import os
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
+last_message_id = None
+
 def send_telegram_message(message):
+    global last_message_id
     url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage'
     params = {'chat_id': TELEGRAM_CHAT_ID, 'text': message}
     response = requests.post(url, params=params)
     print(f"Telegram response: {response.status_code} - {response.text}")
+    if response.status_code == 200:
+        last_message_id = response.json()['result']['message_id']
+
+def edit_telegram_message(message):
+    global last_message_id
+    if last_message_id is None:
+        send_telegram_message(message)
+    else:
+        url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/editMessageText'
+        params = {
+            'chat_id': TELEGRAM_CHAT_ID,
+            'message_id': last_message_id,
+            'text': message
+        }
+        response = requests.post(url, params=params)
+        print(f"Telegram response: {response.status_code} - {response.text}")
+        if response.status_code != 200:
+            send_telegram_message(message)
+
+def get_last_message_text():
+    url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates'
+    response = requests.get(url)
+    print(f"Telegram getUpdates response: {response.status_code} - {response.text}")
+    if response.status_code == 200:
+        data = response.json()
+        if data['result']:
+            last_message = data['result'][-1]['message']
+            return last_message['message_id'], last_message['text']
+    return None, None
 
 def scrape_availability(url):
     options = webdriver.ChromeOptions()
@@ -85,5 +117,17 @@ def check_availability_for_dates(start_date, end_date):
 user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
 start_date = datetime.strptime('2024-08-20', '%Y-%m-%d')
 end_date = datetime.strptime('2024-08-23', '%Y-%m-%d')
+
+# Get the last message text and ID
+last_message_id, last_message_text = get_last_message_text()
+current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+message = f"Edited: {current_time}"
+
+# Check if the last message is the "Edited" message
+if last_message_text and last_message_text.startswith("Edited:"):
+    last_message_id = last_message_id
+    edit_telegram_message(message)
+else:
+    send_telegram_message(message)
 
 check_availability_for_dates(start_date, end_date)
