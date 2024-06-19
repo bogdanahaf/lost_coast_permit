@@ -4,22 +4,22 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime, timedelta
+from pytz import timezone
 import os
 
 # Define your Telegram bot token and chat ID
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
-
-last_message_id = None
+LA_TIMEZONE = timezone('America/Los_Angeles')
 
 def send_telegram_message(message):
-    global last_message_id
     url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage'
     params = {'chat_id': TELEGRAM_CHAT_ID, 'text': message}
     response = requests.post(url, params=params)
     print(f"Telegram response: {response.status_code} - {response.text}")
     if response.status_code == 200:
-        last_message_id = response.json()['result']['message_id']
+        return response.json()['result']['message_id']
+    return None
 
 def edit_telegram_message(message, message_id):
     url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/editMessageText'
@@ -29,20 +29,28 @@ def edit_telegram_message(message, message_id):
         'text': message
     }
     response = requests.post(url, params=params)
-    print(f"Telegram response: {response.status_code} - {response.text}")
-    if response.status_code != 200:
-        send_telegram_message(message)
+    print(f"Telegram edit response: {response.status_code} - {response.text}")
 
-def get_last_message_text():
-    url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates'
-    response = requests.get(url)
-    print(f"Telegram getUpdates response: {response.status_code} - {response.text}")
+def pin_telegram_message(message_id):
+    url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/pinChatMessage'
+    params = {
+        'chat_id': TELEGRAM_CHAT_ID,
+        'message_id': message_id,
+        'disable_notification': True
+    }
+    response = requests.post(url, params=params)
+    print(f"Telegram pin response: {response.status_code} - {response.text}")
+
+def get_pinned_message():
+    url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getChat'
+    params = {'chat_id': TELEGRAM_CHAT_ID}
+    response = requests.get(url, params=params)
+    print(f"Telegram getChat response: {response.status_code} - {response.text}")
     if response.status_code == 200:
         data = response.json()
-        if data['result']:
-            last_message = data['result'][-1]['message']
-            return last_message['message_id'], last_message['text']
-    return None, None
+        if 'pinned_message' in data['result']:
+            return data['result']['pinned_message']['message_id']
+    return None
 
 def scrape_availability(url):
     options = webdriver.ChromeOptions()
@@ -114,16 +122,17 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 start_date = datetime.strptime('2024-08-20', '%Y-%m-%d')
 end_date = datetime.strptime('2024-08-23', '%Y-%m-%d')
 
-# Get the last message text and ID
-last_message_id, last_message_text = get_last_message_text()
-current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+# Get the pinned message ID
+pinned_message_id = get_pinned_message()
+current_time = datetime.now(LA_TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
 message = f"Edited: {current_time}"
 
-# Check if the last message is the "Edited" message
-if last_message_text and last_message_text.startswith("Edited:"):
-    edit_telegram_message(message, last_message_id)
+# Edit the pinned message or send a new one and pin it
+if pinned_message_id:
+    edit_telegram_message(message, pinned_message_id)
 else:
-    send_telegram_message(message)
+    new_message_id = send_telegram_message(message)
+    if new_message_id:
+        pin_telegram_message(new_message_id)
 
 check_availability_for_dates(start_date, end_date)
- 
