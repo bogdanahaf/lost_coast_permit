@@ -21,21 +21,17 @@ def send_telegram_message(message):
     if response.status_code == 200:
         last_message_id = response.json()['result']['message_id']
 
-def edit_telegram_message(message):
-    global last_message_id
-    if last_message_id is None:
+def edit_telegram_message(message, message_id):
+    url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/editMessageText'
+    params = {
+        'chat_id': TELEGRAM_CHAT_ID,
+        'message_id': message_id,
+        'text': message
+    }
+    response = requests.post(url, params=params)
+    print(f"Telegram response: {response.status_code} - {response.text}")
+    if response.status_code != 200:
         send_telegram_message(message)
-    else:
-        url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/editMessageText'
-        params = {
-            'chat_id': TELEGRAM_CHAT_ID,
-            'message_id': last_message_id,
-            'text': message
-        }
-        response = requests.post(url, params=params)
-        print(f"Telegram response: {response.status_code} - {response.text}")
-        if response.status_code != 200:
-            send_telegram_message(message)
 
 def get_last_message_text():
     url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates'
@@ -125,8 +121,7 @@ message = f"Edited: {current_time}"
 
 # Check if the last message is the "Edited" message
 if last_message_text and last_message_text.startswith("Edited:"):
-    last_message_id = last_message_id
-    edit_telegram_message(message)
+    edit_telegram_message(message, last_message_id)
 else:
     send_telegram_message(message)
 
