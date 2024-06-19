@@ -93,8 +93,7 @@ def scrape_availability(url):
         )
         print("Availability information loaded")
 
-        # availability_element = driver.find_element(By.XPATH, '//*[@id="per-availability-main"]/div/div[5]/div[3]/div[2]/div[2]/div/div[2]/div/button/span/span')
-        availability_element = driver.find_element(By.XPATH, '//*[@id="p')
+        availability_element = driver.find_element(By.XPATH, '//*[@id="per-availability-main"]/div/div[5]/div[3]/div[2]/div[2]/div/div[2]/div/button/span/span')
         availability_text = availability_element.text.strip()
         print(f"Availability Information: {availability_text}")
 
@@ -121,7 +120,7 @@ def check_availability_for_dates(start_date, end_date):
 
 user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
 start_date = datetime.strptime('2024-08-20', '%Y-%m-%d')
-end_date = datetime.strptime('2024-08-24', '%Y-%m-%d')
+end_date = datetime.strptime('2024-08-23', '%Y-%m-%d')
 
 # Get the pinned message ID
 pinned_message_id = get_pinned_message()
